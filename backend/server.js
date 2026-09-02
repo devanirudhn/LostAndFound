@@ -15,7 +15,7 @@ const app = express();
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 // Uses FRONTEND_URL env variable. Set this to your Vercel URL in production.
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
+  process.env.FRONTEND_URL || 'https://lost-and-found-k336.vercel.app',
 ];
 
 app.use(
