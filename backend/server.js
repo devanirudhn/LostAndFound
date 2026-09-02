@@ -13,24 +13,51 @@ connectDB();
 const app = express();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-// Uses FRONTEND_URL env variable. Set this to your Vercel URL in production.
+
+// Your Vercel frontend
+const FRONTEND_URL = 'https://lost-and-found-k336.vercel.app';
+
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'https://lost-and-found-k336.vercel.app',
-];
+  FRONTEND_URL,
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, curl, Postman, health checks)
-      if (!origin) return callback(null, true);
+      // Allow requests with no Origin
+      // (Postman, curl, mobile apps, server-to-server requests, etc.)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Allow the Vercel frontend
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+
+      console.log('❌ CORS blocked origin:', origin);
+
+      return callback(
+        new Error(`CORS policy: origin ${origin} not allowed`)
+      );
     },
+
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+
+    methods: [
+      'GET',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS'
+    ],
+
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization'
+    ]
   })
 );
 
@@ -44,7 +71,7 @@ app.get('/', (req, res) => {
     success: true,
     message: 'LostFound API is running',
     version: '1.0.0',
-    docs: '/api/health',
+    docs: '/api/health'
   });
 });
 
@@ -54,7 +81,7 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: 'LostFound API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -62,11 +89,11 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
 
-// ─── 404 Handler ─────────────────────────────────────────────────────────────
+// ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.originalUrl} not found`,
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
@@ -76,24 +103,29 @@ app.use((err, req, res, next) => {
 
   // CORS error
   if (err.message && err.message.startsWith('CORS policy')) {
-    return res.status(403).json({ success: false, message: err.message });
+    return res.status(403).json({
+      success: false,
+      message: err.message
+    });
   }
 
   const statusCode = err.statusCode || err.status || 500;
+
   res.status(statusCode).json({
     success: false,
-    message: err.message || 'Internal Server Error',
+    message: err.message || 'Internal Server Error'
   });
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
-// Render provides PORT dynamically. Locally defaults to 5000.
+// Render provides PORT dynamically.
+// Locally defaults to 5000.
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ LostFound API running on port ${PORT}`);
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   CORS origin: ${allowedOrigins.join(', ')}`);
+  console.log(`   CORS origins: ${allowedOrigins.join(', ')}`);
 });
 
 module.exports = app;
